@@ -40,6 +40,16 @@ def test_vector():
     assert aaz == approx([38, 45])
 
 
+@pytest.mark.parametrize("lat,lon,slantrange,az", [(10, 20, 3e3, 38), (0, 0, 0, 0)])
+def test_identity(lat, lon, slantrange, az):
+    lat1, lon1 = vincenty.vreckon(lat, lon, slantrange, az)
+
+    dist, az1 = vincenty.vdist(lat, lon, lat1, lon1)
+
+    assert dist == approx(slantrange)
+    assert az1 == approx(az)
+
+
 @pytest.mark.parametrize("shape", [(4,), (2, 2), (1, 2, 2)])
 @pytest.mark.parametrize("deg", [True, False])
 def test_vector_antipodal_fallback(shape, deg, caplog):
@@ -66,13 +76,3 @@ def test_vector_antipodal_fallback(shape, deg, caplog):
     np.testing.assert_allclose(azimuth.ravel(), expected[1], rtol=0, atol=1e-8)
     np.testing.assert_array_equal(coords, original)
     assert len(caplog.records) == 1
-
-
-@pytest.mark.parametrize("lat,lon,slantrange,az", [(10, 20, 3e3, 38), (0, 0, 0, 0)])
-def test_identity(lat, lon, slantrange, az):
-    lat1, lon1 = vincenty.vreckon(lat, lon, slantrange, az)
-
-    dist, az1 = vincenty.vdist(lat, lon, lat1, lon1)
-
-    assert dist == approx(slantrange)
-    assert az1 == approx(az)
