@@ -167,7 +167,9 @@ def vdist(lat1, lon1, lat2, lon2, ell: Ellipsoid | None = None, deg: bool = True
 
         try:
             with warnings.catch_warnings(record=True):
-                warnings.simplefilter("error")
+                # Coincident pairs produce NaN, handled per element below.
+                # Keep valid pairs in the same array from taking the fallback.
+                warnings.simplefilter("ignore", RuntimeWarning)
                 sinAlpha = cos(U1) * cos(U2) * sin(lamb) / sin(sigma)
 
                 alpha = asin(sinAlpha)
