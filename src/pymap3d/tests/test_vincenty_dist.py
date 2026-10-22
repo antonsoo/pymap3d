@@ -42,7 +42,8 @@ def test_vector():
 
 @pytest.mark.parametrize("shape", [(3,), (1, 3), (3, 1)])
 @pytest.mark.parametrize("deg", [True, False])
-def test_vector_coincident_pair(shape, deg):
+@pytest.mark.parametrize("error_mode", ["warn", "raise", "ignore"])
+def test_vector_coincident_pair(shape, deg, error_mode):
     np = pytest.importorskip("numpy")
     coords = np.array(
         [[0, 10, 40], [0, 20, -70], [0, 11, 41], [0, 21, -72]], dtype=float
@@ -52,9 +53,12 @@ def test_vector_coincident_pair(shape, deg):
     expected = np.array([vincenty.vdist(*point, deg=deg) for point in coords.T]).T
     original = coords.copy()
 
-    distance, azimuth = vincenty.vdist(
-        *(value.reshape(shape) for value in coords), deg=deg
-    )
+    with np.errstate(all=error_mode):
+        policy = np.geterr().copy()
+        distance, azimuth = vincenty.vdist(
+            *(value.reshape(shape) for value in coords), deg=deg
+        )
+        assert np.geterr() == policy
 
     assert distance.shape == azimuth.shape == shape
     np.testing.assert_allclose(distance.ravel(), expected[0], rtol=0, atol=1e-5)
